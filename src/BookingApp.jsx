@@ -49,7 +49,7 @@ export default function BookingApp() {
   const [filters, setFilters] = useState({ priceRange: "all", date: null });
   const [userPrefs] = useState({ currency: "USD", language: "EN" });
 
-  // Load rooms in real-time
+  // Load rooms 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "rooms"), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -59,7 +59,7 @@ export default function BookingApp() {
     return () => unsub();
   }, []);
 
-  // Load bookings for current user in real-time
+  // Load bookings for current user 
   useEffect(() => {
     if (!auth.currentUser) return;
     const q = query(
@@ -118,7 +118,7 @@ export default function BookingApp() {
       }));
   }, [rooms, bookings, filters]);
 
-  const filteredRooms = getFilteredRooms(); // ✅ FIXED
+  const filteredRooms = getFilteredRooms(); 
 
   return (
     <ThemeProvider theme={theme}>

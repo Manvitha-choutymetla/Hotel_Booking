@@ -69,5 +69,5 @@ export async function seedRooms() {
   for (const room of rooms) {
     await addDoc(roomsCollection, room);
   }
-  console.log("✅ Rooms added to Firestore with availability & images!");
+  console.log(" Rooms added to Firestore with availability & images!");
 }
