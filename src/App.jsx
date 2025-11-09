@@ -1,100 +1,68 @@
-import React, { useState, useEffect, useReducer, useCallback } from 'react';
-import { Container, Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { UserContext } from './context/UserContext.js';
-import { bookingReducer } from './reducers/BookingReducer.js';
-import FilterSection from './components/FilterSection';
-import RoomList from './components/RoomList';
-import BookingsList from './components/BookingsList';
+// src/App.jsx
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
 
-//Material-UI
-const theme = createTheme({
-  palette: {
-    primary: { main: '#3b82f6' },
-    background: { default: '#f5f5f5' },
-  },
-  typography: { fontFamily: 'Arial, sans-serif' },
-});
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import BookingApp from "./BookingApp.jsx";
+import { Box, Button } from "@mui/material";
 
-//BookingApp component
-export default function BookingApp() {
-  // State for rooms, bookings, loading status, and filters
-  const [rooms, setRooms] = useState([]);
-  const [bookings, dispatch] = useReducer(bookingReducer, []);
+export default function App() {
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ date: '', priceRange: 'all' });
-  const [userPrefs] = useState({ currency: 'USD', language: 'EN' });
+  const [loggedIn, setLoggedIn] = useState(false);
+  const nav = useNavigate();
 
-  // Fetch room data on component mount
+  // Listen for login/logout changes
   useEffect(() => {
-    const loadRooms = async () => {
-      try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/users');
-        const data = await response.json();
-
-        // Transform user data into room objects
-        const roomsData = data.slice(0, 6).map((user, index) => ({
-          id: user.id,
-          name: `Room ${user.id}`,
-          type: ['Deluxe', 'Standard', 'Suite'][index % 3],
-          price: Math.floor(Math.random() * 200) + 80, // Random price 80-280
-          capacity: [2, 3, 4][index % 3],
-        }));
-
-        setRooms(roomsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to load rooms:', error);
-        setRooms([]);
-        setLoading(false);
-      }
-    };
-
-    loadRooms();
+    const stop = onAuthStateChanged(auth, (user) => {
+      setLoggedIn(!!user);
+      setLoading(false);
+    });
+    return () => stop();
   }, []);
 
-  // Function to handle booking a room
-  const handleBookRoom = useCallback((room) => {
-    dispatch({ type: 'ADD_BOOKING', payload: room });
-  }, []);
+  // Logout handler
+  const handleLogout = async () => {
+    await signOut(auth);
+    nav("/"); // go back to login
+  };
 
-  // Function to handle canceling a booking
-  const handleCancelBooking = useCallback((roomId) => {
-    dispatch({ type: 'REMOVE_BOOKING', payload: roomId });
-  }, []);
+  if (loading) {
+    return <div style={{ padding: 40 }}>Checking login...</div>;
+  }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <UserContext.Provider value={{ prefs: userPrefs }}>
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', py: 3 }}>
-          <Container maxWidth="md">
-            {/* App Header */}
-            <Box sx={{ mb: 3 }}>
-              <h1 style={{ margin: 0, fontSize: '28px', color: '#333' }}>Hotel Booking</h1>
-            </Box>
-
-            {/* Filter section for rooms */}
-            <FilterSection onFilterChange={setFilters} />
-
-            {/* Section title for available rooms */}
-            <Box sx={{ mb: 3, mt: 3 }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: '#333' }}>Available Rooms</h2>
-            </Box>
-
-            {/* List of available rooms */}
-            <RoomList
-              rooms={rooms}
-              onBook={handleBookRoom}
-              bookings={bookings}
-              loading={loading}
-              filters={filters}
-            />
-
-            {/* List of booked rooms */}
-            <BookingsList bookings={bookings} onCancel={handleCancelBooking} />
-          </Container>
+    <>
+      {/* Show Logout button only when logged in */}
+      {loggedIn && (
+        <Box sx={{ p: 2, textAlign: "right", background: "#0b1e39" }}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleLogout}
+            sx={{ textTransform: "none" }}
+          >
+            Logout
+          </Button>
         </Box>
-      </UserContext.Provider>
-    </ThemeProvider>
+      )}
+
+      <Routes>
+        <Route
+          path="/"
+          element={loggedIn ? <Navigate to="/booking" /> : <Login />}
+        />
+        <Route
+          path="/signup"
+          element={loggedIn ? <Navigate to="/booking" /> : <Signup />}
+        />
+        <Route
+          path="/booking"
+          element={loggedIn ? <BookingApp /> : <Navigate to="/" />}
+        />
+      </Routes>
+    </>
   );
 }
