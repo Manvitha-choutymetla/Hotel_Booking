@@ -1,6 +1,13 @@
+// src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, inMemoryPersistence } from "firebase/auth";
-
+import { 
+  getAuth, 
+  setPersistence, 
+  inMemoryPersistence 
+} from "firebase/auth";
+import { 
+  getFirestore 
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDkUREWRKelG7la3nVy3dAgiRpN0UTqQec",
@@ -11,6 +18,12 @@ const firebaseConfig = {
   appId: "1:577482399239:web:7f910ef26de91d7a5714a2"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Configure Auth (No session persistence)
 export const auth = getAuth(app);
-setPersistence(auth, inMemoryPersistence); 
+setPersistence(auth, inMemoryPersistence);
+
+// Firestore DB export 
+export const db = getFirestore(app);
